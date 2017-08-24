@@ -123,6 +123,14 @@ done
 tools/dns_update
 tools/web_update
 
+# Prepare logs for fail2ban
+mkdir -p /var/log/nginx/
+touch /var/log/nginx/access.log
+mkdir -p /home/user-data/owncloud/
+touch /home/user-data/owncloud/nextcloud.log
+mkdir -p /var/log/roundcubemail
+touch /var/log/roundcubemail/errors
+
 # Give fail2ban another restart. The log files may not all have been present when
 # fail2ban was first configured, but they should exist now.
 restart_service fail2ban
