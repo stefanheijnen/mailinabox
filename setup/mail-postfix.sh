@@ -49,8 +49,16 @@ source /etc/mailinabox.conf # load global vars
 # > infrastructure and every commercial vendor of dnswl.org data (eg through
 # > anti-spam solutions) must register with dnswl.org and purchase a subscription.
 
+if test ! "`dpkg -l | grep -o postgrey`"; then
+	echo "Installing modified Postgrey..."
+	MOD_POSTGREY_URL="http://ppa.launchpad.net/mail-in-a-box/ppa/ubuntu/pool/main/p/postgrey/postgrey_1.35-1+miab1_all.deb"
+	wget "$MOD_POSTGREY_URL" -O /tmp/postgrey.deb
+	# No apt_install, but really apt install .. (we need to fetch deps)
+	apt install /tmp/postgrey.deb
+fi
+
 echo "Installing Postfix (SMTP server)..."
-apt_install postfix postfix-pcre postgrey ca-certificates
+apt_install postfix postfix-pcre ca-certificates # postgrey
 
 # ### Basic Settings
 
