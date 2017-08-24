@@ -25,7 +25,7 @@ if grep -q "ExternalIgnoreList" /etc/opendkim.conf; then
 	true # already done #NODOC
 else
 	# Add various configuration options to the end of `opendkim.conf`.
-	cat >> /etc/opendkim.conf << EOF;
+	cat >> /etc/opendkim.conf << EOF
 MinimumKeyBits          1024
 ExternalIgnoreList      refile:/etc/opendkim/TrustedHosts
 InternalHosts           refile:/etc/opendkim/TrustedHosts
@@ -35,6 +35,10 @@ Socket                  inet:8891@127.0.0.1
 RequireSafeKeys         false
 EOF
 fi
+
+# Fix missing files
+touch /etc/opendkim/SigningTable
+touch /etc/opendkim/KeyTable
 
 # Create a new DKIM key. This creates mail.private and mail.txt
 # in $STORAGE_ROOT/mail/dkim. The former is the private key and
