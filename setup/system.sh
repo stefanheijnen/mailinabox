@@ -86,7 +86,7 @@ if [ ! -f /usr/bin/add-apt-repository ]; then
 	apt_install software-properties-common
 fi
 
-hide_output add-apt-repository -y ppa:mail-in-a-box/ppa
+# hide_output add-apt-repository -y ppa:mail-in-a-box/ppa
 
 # ### Update Packages
 
@@ -125,9 +125,9 @@ apt_install python3 python3-dev python3-pip \
 # The PPA is located here https://launchpad.net/%7Eondrej/+archive/ubuntu/php
 # Unattended upgrades are activated for the repository
 
-hide_output add-apt-repository -y ppa:ondrej/php
-apt_add_repository_to_unattended_upgrades LP-PPA-ondrej-php:trusty
-hide_output apt-get update
+# hide_output add-apt-repository -y ppa:ondrej/php
+# apt_add_repository_to_unattended_upgrades LP-PPA-ondrej-php:trusty
+# hide_output apt-get update
 
 
 # ### Suppress Upgrade Prompts
