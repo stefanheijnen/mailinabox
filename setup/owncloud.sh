@@ -11,15 +11,16 @@ echo "Installing Nextcloud (contacts/calendar)..."
 
 # Keep the php5 dependancies for the owncloud upgrades
 apt_install \
-	dbconfig-common \
-	php5-cli php5-sqlite php5-gd php5-imap php5-curl php-pear php-apc curl libapr1 libtool libcurl4-openssl-dev php-xml-parser \
-	php5 php5-dev php5-gd php5-fpm memcached php5-memcached
+	dbconfig-common php-pear php-apcu curl libapr1 libtool libcurl4-openssl-dev php-xml-parser memcached 
+#	dbconfig-common php-pear php-apc curl libapr1 libtool libcurl4-openssl-dev php-xml-parser memcached  \
+#	php5-cli php5-sqlite php5-gd php5-imap php5-curl \
+#	php5 php5-dev php5-gd php5-fpm php5-memcached
 
 apt-get purge -qq -y owncloud*
 
 apt_install php7.0 php7.0-fpm \
-	php7.0-cli php7.0-sqlite php7.0-gd php7.0-imap php7.0-curl php-pear php-apc curl \
-        php7.0-dev php7.0-gd memcached php7.0-memcached php7.0-xml php7.0-mbstring php7.0-zip php7.0-apcu
+	php7.0-cli php7.0-sqlite php7.0-gd php7.0-imap php7.0-curl php-pear php-apcu curl \
+        php7.0-dev php7.0-gd memcached php-memcached php7.0-xml php7.0-mbstring php7.0-zip
 
 # Migrate <= v0.10 setups that stored the ownCloud config.php in /usr/local rather than
 # in STORAGE_ROOT. Move the file to STORAGE_ROOT.
@@ -163,7 +164,7 @@ if [ ! -d /usr/local/lib/owncloud/ ] \
 
 	# Stop php-fpm
 	hide_output service php7.0-fpm stop
-	hide_output service php5-fpm stop
+	# hide_output service php5-fpm stop
 
 	# Backup the existing ownCloud/Nextcloud.
 	# Create a backup directory to store the current installation and database to
