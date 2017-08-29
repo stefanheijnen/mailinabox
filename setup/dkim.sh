@@ -13,8 +13,37 @@ source /etc/mailinabox.conf # load global vars
 echo Installing OpenDKIM/OpenDMARC...
 apt_install opendkim opendkim-tools opendmarc
 
+# Fix systemd forced socket if not done already ..
+SYSTEMD_FILE=/lib/systemd/system/opendkim.service
+if test -f "$SYSTEMD_FILE"; then
+	if test ! "`grep -o "^#ExecStart" "$SYSTEMD_FILE"`"; then
+
+		#
+		# Rebuilding systemd ...
+		#
+
+		SYSTEMD_PID=`grep "^PIDFile=" "$SYSTEMD_FILE" 2>/dev/null | cut -d= -f2`
+		SYSTEMD_USER=`grep "^User=" "$SYSTEMD_FILE" 2>/dev/null | cut -d= -f2`
+
+		SYSTEMD_NEW_EXEC_START='/usr/sbin/opendkim -x /etc/opendkim.conf'
+
+		if test "$SYSTEMD_PID"; then
+			SYSTEMD_NEW_EXEC_START="${SYSTEMD_NEW_EXEC_START} -P $SYSTEMD_PID"
+		fi
+
+		if test "$SYSTEMD_USER"; then
+			SYSTEMD_NEW_EXEC_START="${SYSTEMD_NEW_EXEC_START} -u $SYSTEMD_USER"
+		fi
+
+		# Comment out old ExecStart & insert our own ..
+		sed -i "s,ExecStart=.*,ExecStart=${SYSTEMD_NEW_EXEC_START}\n#\0,g" "$SYSTEMD_FILE"
+
+		/bin/systemctl daemon-reload
+	fi
+fi
+
 # Make sure configuration directories exist.
-mkdir -p /etc/opendkim;
+mkdir -p /etc/opendkim
 mkdir -p $STORAGE_ROOT/mail/dkim
 
 # Used in InternalHosts and ExternalIgnoreList configuration directives.
@@ -32,7 +61,7 @@ InternalHosts           refile:/etc/opendkim/TrustedHosts
 KeyTable                refile:/etc/opendkim/KeyTable
 SigningTable            refile:/etc/opendkim/SigningTable
 Socket                  inet:8891@127.0.0.1
-RequireSafeKeys         false
+RequireSafeKeys         No
 EOF
 fi
 
