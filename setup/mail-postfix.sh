@@ -54,7 +54,7 @@ if test ! "`dpkg -l | grep -o postgrey`"; then
 	MOD_POSTGREY_URL="http://ppa.launchpad.net/mail-in-a-box/ppa/ubuntu/pool/main/p/postgrey/postgrey_1.35-1+miab1_all.deb"
 	wget "$MOD_POSTGREY_URL" -O /tmp/postgrey.deb
 	# No apt_install, but really apt install .. (we need to fetch deps)
-	apt install /tmp/postgrey.deb
+	apt install /tmp/postgrey.deb -y
 fi
 
 echo "Installing Postfix (SMTP server)..."
