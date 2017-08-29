@@ -59,6 +59,11 @@ done
 # Create a 'state' directory. Not sure why we need to do this manually.
 mkdir -p /var/lib/munin-node/plugin-state/
 
+if test "`file /lib/systemd/system/munin.service | grep -o "symbolic link to /dev/null"`"; then
+	rm /lib/systemd/system/munin.service
+	systemctl daemon-reload
+fi
+
 # Restart services.
 restart_service munin
 restart_service munin-node
