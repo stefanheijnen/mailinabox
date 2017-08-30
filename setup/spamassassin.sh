@@ -100,7 +100,7 @@ sed -i "s/#mail_plugins = .*/mail_plugins = \$mail_plugins antispam/" /etc/dovec
 sed -i "s/#mail_plugins = .*/mail_plugins = \$mail_plugins antispam/" /etc/dovecot/conf.d/20-pop3.conf
 
 # Configure the antispam plugin to call sa-learn-pipe.sh.
-cat > /etc/dovecot/conf.d/99-local-spampd.conf << EOF;
+cat > /etc/dovecot/conf.d/99-local-spampd.conf << EOF
 plugin {
     antispam_backend = pipe
     antispam_spam_pattern_ignorecase = SPAM
@@ -122,7 +122,7 @@ tools/editconf.py /etc/dovecot/conf.d/10-mail.conf \
 # a temporary file and then runs sa-learn on it.
 # from http://wiki2.dovecot.org/Plugins/Antispam
 rm -f /usr/bin/sa-learn-pipe.sh # legacy location #NODOC
-cat > /usr/local/bin/sa-learn-pipe.sh << EOF;
+cat > /usr/local/bin/sa-learn-pipe.sh << EOF
 cat<&0 >> /tmp/sendmail-msg-\$\$.txt
 /usr/bin/sa-learn \$* /tmp/sendmail-msg-\$\$.txt > /dev/null
 rm -f /tmp/sendmail-msg-\$\$.txt
@@ -144,3 +144,5 @@ chmod 770 $STORAGE_ROOT/mail/spamassassin
 restart_service spampd
 restart_service dovecot
 
+# Again fix permissions
+chown -R spampd:spampd $STORAGE_ROOT/mail/spamassassin
