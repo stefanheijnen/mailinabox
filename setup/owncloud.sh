@@ -155,8 +155,8 @@ InstallOwncloud() {
 	fi
 }
 
-owncloud_ver=12.0.0
-owncloud_hash=5d64307d9ce513a8905514b2fbe212f563fe76df
+owncloud_ver=12.0.2
+owncloud_hash=eba44ac1dd8590b1e38ea67c29fe277f57d6cf18
 
 # Check if Nextcloud dir exist, and check if version matches owncloud_ver (if either doesn't - install/upgrade)
 if [ ! -d /usr/local/lib/owncloud/ ] \
@@ -223,6 +223,7 @@ EOF
 			sudo -u www-data php5 /usr/local/lib/owncloud/occ dav:sync-birthday-calendar
 		fi
 
+        
 		# If we are upgrading from 9.0.x we should go to 9.1 first.
 		if grep -q "9\.0\.[0-9]" /usr/local/lib/owncloud/version.php; then
 			echo "We are running ownCloud 9.0.x, upgrading to ownCloud 9.1.4 first"
@@ -255,7 +256,7 @@ if [ ! -f $STORAGE_ROOT/owncloud/owncloud.db ]; then
 
 	# Create an initial configuration file.
 	instanceid=oc$(echo $PRIMARY_HOSTNAME | sha1sum | fold -w 10 | head -n 1)
-	cat > $STORAGE_ROOT/owncloud/config.php <<EOF;
+	cat > $STORAGE_ROOT/owncloud/config.php <<EOF
 <?php
 \$CONFIG = array (
   'datadirectory' => '$STORAGE_ROOT/owncloud',
@@ -290,7 +291,7 @@ EOF
 	# when the install script is run. Make an administrator account
 	# here or else the install can't finish.
 	adminpassword=$(dd if=/dev/urandom bs=1 count=40 2>/dev/null | sha1sum | fold -w 30 | head -n 1)
-	cat > /usr/local/lib/owncloud/config/autoconfig.php <<EOF;
+	cat > /usr/local/lib/owncloud/config/autoconfig.php <<EOF
 <?php
 \$AUTOCONFIG = array (
   # storage/database
@@ -327,7 +328,7 @@ fi
 # Use PHP to read the settings file, modify it, and write out the new settings array.
 TIMEZONE=$(cat /etc/timezone)
 CONFIG_TEMP=$(/bin/mktemp)
-php <<EOF > $CONFIG_TEMP && mv $CONFIG_TEMP $STORAGE_ROOT/owncloud/config.php;
+php <<EOF > $CONFIG_TEMP && mv $CONFIG_TEMP $STORAGE_ROOT/owncloud/config.php
 <?php
 include("$STORAGE_ROOT/owncloud/config.php");
 
