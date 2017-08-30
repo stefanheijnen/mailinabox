@@ -304,6 +304,10 @@ if ! grep -q "listen-on " /etc/bind/named.conf.options; then
 	# Add a listen-on directive if it doesn't exist inside the options block.
 	sed -i "s/^}/\n\tlisten-on { 127.0.0.1; };\n}/" /etc/bind/named.conf.options
 fi
+
+# If listening to all interfaces on ipv6, listen only on localhost ..
+sed -i 's,listen-on-v6 { any; },listen-on-v6 { ::1; },g' /etc/bind/named.conf.options
+
 if [ -f /etc/resolvconf/resolv.conf.d/original ]; then
 	echo "Archiving old resolv.conf (was /etc/resolvconf/resolv.conf.d/original, now /etc/resolvconf/resolv.conf.original)." #NODOC
 	mv /etc/resolvconf/resolv.conf.d/original /etc/resolvconf/resolv.conf.original #NODOC
