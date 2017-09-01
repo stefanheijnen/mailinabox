@@ -34,6 +34,151 @@ if [ ! -f $STORAGE_ROOT/owncloud/config.php ] \
 	ln -sf $STORAGE_ROOT/owncloud/config.php /usr/local/lib/owncloud/config/config.php
 fi
 
+InstallSolr() {
+
+	local SOLR_VERSION=6.6.0
+	echo "Installing solr version $SOLR_VERSION"
+
+	# Also prepare for nextant with solr
+	apt_install openjdk-8-jdk tesseract-ocr
+
+	local SOLR_PATH=/usr/local/lib/solr
+	local SOLR_DATA=$STORAGE_ROOT/solr/data
+	wget_verify ftp://mirror.hosting90.cz/apache/lucene/solr/${SOLR_VERSION}/solr-${SOLR_VERSION}.tgz 88add027c90adfdaaaeb335aa02394bfd7015f18 /tmp/solr.tgz
+	tar xf /tmp/solr.tgz -C /usr/local/lib/
+	mv /usr/local/lib/solr-${SOLR_VERSION} $SOLR_PATH
+
+	# Listen only on localhost
+	if grep -q '<Property name="jetty.host" />' $SOLR_PATH/server/etc/jetty-http.xml; then
+		sed -i 's,<Property name="jetty.host" />,<Property name="jetty.host" default="127.0.0.1" />,g' $SOLR_PATH/server/etc/jetty-http.xml
+	fi
+
+	# We won't run solr as root, as it is a huge security risk
+	useradd solr &>/dev/null
+
+	mkdir -p $STORAGE_ROOT/solr/log
+
+	# Create basic configset for nextant
+	if test ! -d $SOLR_DATA/nextant; then
+		cp -rf $SOLR_PATH/server/solr/{configsets/basic_configs,nextant}
+		mv $SOLR_PATH/server/solr $SOLR_DATA
+	fi
+	ln -sf $SOLR_DATA $SOLR_PATH/server/solr
+
+	if test -d /etc/systemd && test ! -f $STORAGE_ROOT/solr/systemd.service; then
+		cat > $STORAGE_ROOT/solr/systemd.service <<EOF
+[Unit]
+Description=Apache Solr for Nextcloud's nextant app fulltext indexing
+After=syslog.target network.target remote-fs.target nss-lookup.target systemd-journald-dev-log.socket
+Before=nginx.service
+
+[Service]
+Type=forking
+User=solr
+Group=solr
+WorkingDirectory=$SOLR_PATH/server
+ExecStart=$SOLR_PATH/bin/solr start -m 256m -Dsolr.log.dir=$STORAGE_ROOT/solr/log
+ExecStop=$SOLR_PATH/bin/solr stop
+Restart=on-failure
+
+[Install]
+WantedBy=multi-user.target
+EOF
+		ln -sf $STORAGE_ROOT/solr/systemd.service /etc/systemd/system/solr.service
+		# Sometimes not working .. probably when reloading at the same second ?
+		sleep 1
+		systemctl daemon-reload
+	else
+		cat > $STORAGE_ROOT/solr/initd.sh <<EOF
+#!/bin/sh
+### BEGIN INIT INFO
+# Provides:          solr
+# Required-Start:    \$remote_fs
+# Required-Stop:     \$remote_fs
+# Default-Start:     2 3 4 5
+# Default-Stop:      0 1 6
+# Short-Description: Solr Search Server
+# Description:       Solr Search Server for use with Nextant full-text serch for NextCloud.
+### END INIT INFO
+
+# Author: jirislav <mail@jkozlovsky.cz>
+
+SOLR_PATH="$SOLR_PATH"
+
+# -force is only required if running solr as root
+start() {
+	su solr -c "\$SOLR_PATH/bin/solr start"
+}
+
+stop() {
+	su solr -c "\$SOLR_PATH/bin/solr stop"
+}
+
+case "\$1" in
+	start)
+		start
+		;;
+	stop)
+		stop
+		;;
+	*)
+		echo "Usage: \$0 {start|stop}"
+		/bin/false
+esac
+exit \$?
+EOF
+		ln -sf $STORAGE_ROOT/solr/initd.sh /etc/init.d/solr 
+		chmod +x $STORAGE_ROOT/solr/initd.sh
+		update-rc.d solr defaults
+		update-rc.d solr enable
+	fi
+
+	chown solr: $SOLR_PATH $SOLR_DATA -R
+
+	echo "Starting solr to manually create an index for nextant ..."
+	su solr -c "$SOLR_PATH/bin/solr start"
+
+	echo "Creating index for nextant ..."
+	su solr -c "$SOLR_PATH/bin/solr create -c nextant"
+
+	echo "Shutting down solr ..."
+	su solr -c "$SOLR_PATH/bin/solr stop"
+
+	restart_service solr
+}
+
+ResetNextAntConfig() {
+	# Disable live indexing into mysql because we're not using MySQL ..
+	sqlite3 $STORAGE_ROOT/owncloud/owncloud.db "INSERT OR IGNORE INTO oc_appconfig VALUES ('nextant', 'index_live', '0')"
+
+	# Index files, files tree & trash 
+	sqlite3 $STORAGE_ROOT/owncloud/owncloud.db "INSERT OR IGNORE INTO oc_appconfig VALUES ('nextant', 'index_files', '1')"
+	sqlite3 $STORAGE_ROOT/owncloud/owncloud.db "INSERT OR IGNORE INTO oc_appconfig VALUES ('nextant', 'index_files_tree', '1')"
+	sqlite3 $STORAGE_ROOT/owncloud/owncloud.db "INSERT OR IGNORE INTO oc_appconfig VALUES ('nextant', 'index_files_trash', '1')"
+
+	# Let nextant take high resources when performing fulltext search
+	sqlite3 $STORAGE_ROOT/owncloud/owncloud.db "INSERT OR IGNORE INTO oc_appconfig VALUES ('nextant', 'resource_level', '4')"
+
+	# Ensure there will be regular cron indexing
+	sqlite3 $STORAGE_ROOT/owncloud/owncloud.db "INSERT OR IGNORE INTO oc_appconfig VALUES ('nextant', 'use_cron', '1')"
+
+	# Timeout at least 1 minute
+	sqlite3 $STORAGE_ROOT/owncloud/owncloud.db "INSERT OR IGNORE INTO oc_appconfig VALUES ('nextant', 'solr_timeout', '60')"
+
+	# Do not force user to configure from the admin module (marking as already configured)..
+	sqlite3 $STORAGE_ROOT/owncloud/owncloud.db "INSERT OR IGNORE INTO oc_appconfig VALUES ('nextant', 'configured', '2')"
+
+	# Insert all supported file types
+	for file_type in `echo text pdf office image`; do
+		sqlite3 $STORAGE_ROOT/owncloud/owncloud.db "INSERT OR IGNORE INTO oc_appconfig VALUES ('nextant', 'index_files_filters_$file_type', '1')"
+	done
+
+	# Do not index only audio for now ..
+	for file_type in `echo audio`; do
+		sqlite3 $STORAGE_ROOT/owncloud/owncloud.db "INSERT OR IGNORE INTO oc_appconfig VALUES ('nextant', 'index_files_filters_$file_type', '0')"
+	done
+}
+
 InstallNextcloud() {
 
 	version=$1
@@ -71,6 +216,17 @@ InstallNextcloud() {
     tar xf /tmp/spreed.tgz -C /usr/local/lib/owncloud/apps/
     rm /tmp/spreed.tgz
     mv /usr/local/lib/owncloud/apps/spreed-${SPREED_VERSION} /usr/local/lib/owncloud/apps/spreed
+
+	#
+	# Install nextant to the nextcloud
+	# but first solr installation is needed ..
+	InstallSolr
+
+	local NEXTANT_VERSION=1.0.8
+	wget_verify https://github.com/nextcloud/nextant/releases/download/v${NEXTANT_VERSION}/nextant-${NEXTANT_VERSION}.tar.gz  ebfbcb028583608e3fa7b9697facc626253dd002 /tmp/nextant.tgz
+	tar xf /tmp/nextant.tgz -C /usr/local/lib/owncloud/apps/
+	rm /tmp/nextant.tgz
+
 
 	# Fix weird permissions.
 	chmod 750 /usr/local/lib/owncloud/{apps,config}
@@ -321,6 +477,8 @@ EOF
 	(cd /usr/local/lib/owncloud; sudo -u www-data php /usr/local/lib/owncloud/index.php;)
 fi
 
+ResetNextAntConfig
+
 # Update config.php.
 # * trusted_domains is reset to localhost by autoconfig starting with ownCloud 8.1.1,
 #   so set it here. It also can change if the box's PRIMARY_HOSTNAME changes, so
@@ -365,6 +523,13 @@ hide_output sudo -u www-data php /usr/local/lib/owncloud/console.php app:enable 
 hide_output sudo -u www-data php /usr/local/lib/owncloud/console.php app:enable contacts
 hide_output sudo -u www-data php /usr/local/lib/owncloud/console.php app:enable calendar
 hide_output sudo -u www-data php /usr/local/lib/owncloud/console.php app:enable spreed
+hide_output sudo -u www-data php /usr/local/lib/owncloud/console.php app:enable nextant
+
+# Do not hide output - these tests are pretty nice 0:) 
+sudo -u www-data php /usr/local/lib/owncloud/occ nextant:test http://127.0.0.1:8983/solr/ nextant --save
+
+# Start indexing on the background
+hide_output sudo -u www-data php /usr/local/lib/owncloud/occ nextant:index --background --unlock
 
 # When upgrading, run the upgrade script again now that apps are enabled. It seems like
 # the first upgrade at the top won't work because apps may be disabled during upgrade?
@@ -421,3 +586,4 @@ chmod +x /etc/cron.hourly/mailinabox-owncloud
 
 # Enable PHP modules and restart PHP.
 restart_service php7.0-fpm
+restart_service solr

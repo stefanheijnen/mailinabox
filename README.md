@@ -38,10 +38,14 @@ Feel free to email me at [developer@jkozlovsky.cz](mailto://developer@jkozlovsky
 Features
 --------
 
-* there is installed [spreed app](https://nextcloud.com/webrtc/) into the Nextcloud by default (Josh refused it)
+* [spreed](https://nextcloud.com/webrtc/) in Nextcloud by default
+    * private and secure voice & videoconference calls
+* [nextant](https://github.com/nextcloud/nextant#nextant) in Nextcloud by default
+    * fulltext search built on top of Apache Solr
+	* you can search text within all of your JPGs, PNGs, PDFs, Office documents, etc. (it's using [OCR](https://en.wikipedia.org/wiki/Optical_character_recognition))
 * all services run in an systemd init system (much better UX)
 * no php5 anywhere! - all running on php7, so there is no need to maintain two versions of php
-* lesser hardware requirements (I run it on 500 MB RAM & 1 CPU without any hassle - from [DigitalOcean](https://www.digitalocean.com/?refcode=210c1aeb22bb&utm_campaign=Referral_Invite&utm_medium=Referral_Program&utm_source=CopyPaste))
+* lesser hardware requirements (I run it on 512 MB RAM & 1 CPU without any hassle - from [DigitalOcean](https://www.digitalocean.com/?refcode=210c1aeb22bb&utm_campaign=Referral_Invite&utm_medium=Referral_Program&utm_source=CopyPaste) )
 
 Disadvantages
 -------------
