@@ -51,4 +51,4 @@ For further info, see [the original documentation for obtaining mail-in-a-box](h
 Troubleshooting
 ---------------
 
-Feel free to email me at [developer@jkozlovsky.cz](mailto://developer@jkozlovsky.cz) or [start an Issue here](https://github.com/jirislav/mailinabox/issues/new), at my fork - describing your problem deep enough.
+Feel free to email me at [developer@jkozlovsky.cz](mailto:developer@jkozlovsky.cz) or [start an Issue here](https://github.com/jirislav/mailinabox/issues/new), at my fork - describing your problem deep enough.
