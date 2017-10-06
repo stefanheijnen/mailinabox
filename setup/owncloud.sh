@@ -66,7 +66,7 @@ InstallSolr() {
 	ln -sf $SOLR_DATA $SOLR_PATH/server/solr
 
 	if test -d /etc/systemd && test ! -f $STORAGE_ROOT/solr/systemd.service; then
-		cat > $STORAGE_ROOT/solr/systemd.service <<EOF
+		cat > $STORAGE_ROOT/solr/solr.service <<EOF
 [Unit]
 Description=Apache Solr for Nextcloud's nextant app fulltext indexing
 After=syslog.target network.target remote-fs.target nss-lookup.target systemd-journald-dev-log.socket
@@ -84,9 +84,7 @@ Restart=on-failure
 [Install]
 WantedBy=multi-user.target
 EOF
-		ln -sf $STORAGE_ROOT/solr/systemd.service /etc/systemd/system/solr.service
-		# Sometimes not working .. probably when reloading at the same second ?
-		sleep 1
+		systemctl enable $STORAGE_ROOT/solr/solr.service
 		systemctl daemon-reload
 	else
 		cat > $STORAGE_ROOT/solr/initd.sh <<EOF
