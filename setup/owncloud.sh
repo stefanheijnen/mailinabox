@@ -315,16 +315,16 @@ InstallOwncloud() {
 	fi
 }
 
-owncloud_ver=12.0.2
-owncloud_hash=eba44ac1dd8590b1e38ea67c29fe277f57d6cf18
+owncloud_ver=12.0.3
+owncloud_hash=beab41f6a748a43f0accfa6a9808387aef718c61
 
 # Check if Nextcloud dir exist, and check if version matches owncloud_ver (if either doesn't - install/upgrade)
 if [ ! -d /usr/local/lib/owncloud/ ] \
         || ! grep -q $owncloud_ver /usr/local/lib/owncloud/version.php; then
 
-	# Stop php-fpm
-	hide_output service php7.0-fpm stop
-	# hide_output service php5-fpm stop
+	# Stop php-fpm if running. If theyre not running (which happens on a previously failed install), dont bail.
+	service php7.0-fpm stop &> /dev/null || /bin/true
+	# service php5-fpm stop &> /dev/null || /bin/true
 
 	# Backup the existing ownCloud/Nextcloud.
 	# Create a backup directory to store the current installation and database to

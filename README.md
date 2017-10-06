@@ -36,11 +36,7 @@ Quick Install
 git clone https://github.com/jirislav/mailinabox.git
 cd mailinabox
 
-# Add upstream sources
-git remote add mail-in-a-box https://github.com/mail-in-a-box/mailinabox.git
-
-# Actualize on top of the master
-git rebase mail-in-a-box/master
+git checkout v0.24-ubuntu16
 
 # Run installation
 setup/start.sh
