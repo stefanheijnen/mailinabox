@@ -215,19 +215,23 @@ InstallNextcloud() {
     rm /tmp/spreed.tgz
     mv /usr/local/lib/owncloud/apps/spreed-${SPREED_VERSION} /usr/local/lib/owncloud/apps/spreed
 
-	#
-	# Install nextant to the nextcloud
-	# but first solr installation is needed ..
-	InstallSolr
+	INSTALL_NEXTANT="yes"
 
-	local NEXTANT_VERSION=1.0.8
-	wget_verify https://github.com/nextcloud/nextant/releases/download/v${NEXTANT_VERSION}/nextant-${NEXTANT_VERSION}.tar.gz  ebfbcb028583608e3fa7b9697facc626253dd002 /tmp/nextant.tgz
-	tar xf /tmp/nextant.tgz -C /usr/local/lib/owncloud/apps/
-	rm /tmp/nextant.tgz
+	if test $INSTALL_NEXTANT = "yes"; then
+		#
+		# Install nextant to the nextcloud
+		# but first solr installation is needed ..
+		InstallSolr
+
+		local NEXTANT_VERSION=1.0.8
+		wget_verify https://github.com/nextcloud/nextant/releases/download/v${NEXTANT_VERSION}/nextant-${NEXTANT_VERSION}.tar.gz  ebfbcb028583608e3fa7b9697facc626253dd002 /tmp/nextant.tgz
+		tar xf /tmp/nextant.tgz -C /usr/local/lib/owncloud/apps/
+		rm /tmp/nextant.tgz
+	fi
 
 
 	# Fix weird permissions.
-	chmod 750 /usr/local/lib/owncloud/{apps,config}
+	chmod 750 -R /usr/local/lib/owncloud/{apps,config}
 
 	# Create a symlink to the config.php in STORAGE_ROOT (for upgrades we're restoring the symlink we previously
 	# put in, and in new installs we're creating a symlink and will create the actual config later).
