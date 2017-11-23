@@ -34,6 +34,17 @@ if [ ! -f ${STORAGE_ROOT}/owncloud/config.php ] \
 	ln -sf ${STORAGE_ROOT}/owncloud/config.php /usr/local/lib/owncloud/config/config.php
 fi
 
+SuggestInstallationWithoutNextant() {
+	echo
+	echo "--------------------------------------------"
+	echo " You might want to try this command instead:"
+	echo "INSTALL_NEXTANT=no setup/start.sh"
+	echo "--------------------------------------------"
+}
+
+# Assume Solr was not installed
+SOLR_INSTALLED="no"
+
 InstallSolr() {
 
 	# Solr version to download
@@ -53,6 +64,12 @@ InstallSolr() {
 	local SOLR_PATH="/usr/local/lib/solr"
 	local SOLR_DATA="${STORAGE_ROOT}/solr/data"
 	wget_verify "${APACHE_FTP_MIRROR}/lucene/solr/${SOLR_VERSION}/solr-${SOLR_VERSION}.tgz" "${SOLR_HASH}" /tmp/solr.tgz
+
+	if test $? -ne 0; then
+		SuggestInstallationWithoutNextant
+		exit 1
+	fi
+
 	tar xf /tmp/solr.tgz -C /usr/local/lib/
 	mv "/usr/local/lib/solr-${SOLR_VERSION}" "${SOLR_PATH}"
 
@@ -150,40 +167,52 @@ EOF
 	echo "Shutting down solr ..."
 	su solr -c "${SOLR_PATH}/bin/solr stop"
 
-	restart_service solr
+	restart_service solr || SuggestInstallationWithoutNextant
+
+	SOLR_INSTALLED="yes"
 }
 
 ResetNextAntConfig() {
-	# Disable live indexing into mysql because we're not using MySQL ..
-	sqlite3 ${STORAGE_ROOT}/owncloud/owncloud.db "INSERT OR IGNORE INTO oc_appconfig VALUES ('nextant', 'index_live', '0')"
+	# Don't do anything if not installing nextant
+	if test ${INSTALL_NEXTANT} = "yes"; then
 
-	# Index files, files tree & trash 
-	sqlite3 ${STORAGE_ROOT}/owncloud/owncloud.db "INSERT OR IGNORE INTO oc_appconfig VALUES ('nextant', 'index_files', '1')"
-	sqlite3 ${STORAGE_ROOT}/owncloud/owncloud.db "INSERT OR IGNORE INTO oc_appconfig VALUES ('nextant', 'index_files_tree', '1')"
-	sqlite3 ${STORAGE_ROOT}/owncloud/owncloud.db "INSERT OR IGNORE INTO oc_appconfig VALUES ('nextant', 'index_files_trash', '1')"
+		# Disable live indexing into mysql because we're not using MySQL ..
+		sqlite3 ${STORAGE_ROOT}/owncloud/owncloud.db "INSERT OR IGNORE INTO oc_appconfig VALUES ('nextant', 'index_live', '0')"
 
-	# Let nextant take high resources when performing fulltext search
-	sqlite3 ${STORAGE_ROOT}/owncloud/owncloud.db "INSERT OR IGNORE INTO oc_appconfig VALUES ('nextant', 'resource_level', '4')"
+		# Index files, files tree & trash 
+		sqlite3 ${STORAGE_ROOT}/owncloud/owncloud.db "INSERT OR IGNORE INTO oc_appconfig VALUES ('nextant', 'index_files', '1')"
+		sqlite3 ${STORAGE_ROOT}/owncloud/owncloud.db "INSERT OR IGNORE INTO oc_appconfig VALUES ('nextant', 'index_files_tree', '1')"
+		sqlite3 ${STORAGE_ROOT}/owncloud/owncloud.db "INSERT OR IGNORE INTO oc_appconfig VALUES ('nextant', 'index_files_trash', '1')"
 
-	# Ensure there will be regular cron indexing
-	sqlite3 ${STORAGE_ROOT}/owncloud/owncloud.db "INSERT OR IGNORE INTO oc_appconfig VALUES ('nextant', 'use_cron', '1')"
+		# Let nextant take high resources when performing fulltext search
+		sqlite3 ${STORAGE_ROOT}/owncloud/owncloud.db "INSERT OR IGNORE INTO oc_appconfig VALUES ('nextant', 'resource_level', '4')"
 
-	# Timeout at least 1 minute
-	sqlite3 ${STORAGE_ROOT}/owncloud/owncloud.db "INSERT OR IGNORE INTO oc_appconfig VALUES ('nextant', 'solr_timeout', '60')"
+		# Ensure there will be regular cron indexing
+		sqlite3 ${STORAGE_ROOT}/owncloud/owncloud.db "INSERT OR IGNORE INTO oc_appconfig VALUES ('nextant', 'use_cron', '1')"
 
-	# Do not force user to configure from the admin module (marking as already configured)..
-	sqlite3 ${STORAGE_ROOT}/owncloud/owncloud.db "INSERT OR IGNORE INTO oc_appconfig VALUES ('nextant', 'configured', '2')"
+		# Timeout at least 1 minute
+		sqlite3 ${STORAGE_ROOT}/owncloud/owncloud.db "INSERT OR IGNORE INTO oc_appconfig VALUES ('nextant', 'solr_timeout', '60')"
 
-	# Insert all supported file types
-	for file_type in `echo text pdf office image`; do
-		sqlite3 ${STORAGE_ROOT}/owncloud/owncloud.db "INSERT OR IGNORE INTO oc_appconfig VALUES ('nextant', 'index_files_filters_$file_type', '1')"
-	done
+		# Do not force user to configure from the admin module (marking as already configured)..
+		sqlite3 ${STORAGE_ROOT}/owncloud/owncloud.db "INSERT OR IGNORE INTO oc_appconfig VALUES ('nextant', 'configured', '2')"
 
-	# Do not index only audio for now ..
-	for file_type in `echo audio`; do
-		sqlite3 ${STORAGE_ROOT}/owncloud/owncloud.db "INSERT OR IGNORE INTO oc_appconfig VALUES ('nextant', 'index_files_filters_$file_type', '0')"
-	done
+		# Insert all supported file types
+		for file_type in `echo text pdf office image`; do
+			sqlite3 ${STORAGE_ROOT}/owncloud/owncloud.db "INSERT OR IGNORE INTO oc_appconfig VALUES ('nextant', 'index_files_filters_$file_type', '1')"
+		done
+
+		# Do not index only audio for now ..
+		for file_type in `echo audio`; do
+			sqlite3 ${STORAGE_ROOT}/owncloud/owncloud.db "INSERT OR IGNORE INTO oc_appconfig VALUES ('nextant', 'index_files_filters_$file_type', '0')"
+		done
+	fi
 }
+
+# Only set INSTALL_NEXTANT if not set previously (e.g. while running setup/start.sh)
+# Note: nextant is a Nextcloud plugin to provide fulltext search even in images
+if test ! -v INSTALL_NEXTANT; then
+	INSTALL_NEXTANT="yes"
+fi
 
 InstallNextcloud() {
 
@@ -222,8 +251,6 @@ InstallNextcloud() {
     tar xf /tmp/spreed.tgz -C /usr/local/lib/owncloud/apps/
     rm /tmp/spreed.tgz
     mv /usr/local/lib/owncloud/apps/spreed-${SPREED_VERSION} /usr/local/lib/owncloud/apps/spreed
-
-	INSTALL_NEXTANT="yes"
 
 	if test ${INSTALL_NEXTANT} = "yes"; then
 		#
@@ -535,13 +562,17 @@ hide_output sudo -u www-data php /usr/local/lib/owncloud/console.php app:enable 
 hide_output sudo -u www-data php /usr/local/lib/owncloud/console.php app:enable contacts
 hide_output sudo -u www-data php /usr/local/lib/owncloud/console.php app:enable calendar
 hide_output sudo -u www-data php /usr/local/lib/owncloud/console.php app:enable spreed
-hide_output sudo -u www-data php /usr/local/lib/owncloud/console.php app:enable nextant
 
-# Do not hide output - these tests are pretty nice 0:) 
-sudo -u www-data php /usr/local/lib/owncloud/occ nextant:test http://127.0.0.1:8983/solr/ nextant --save
+# Don't do anything if not installing nextant
+if test ${INSTALL_NEXTANT} = "yes"; then
+	hide_output sudo -u www-data php /usr/local/lib/owncloud/console.php app:enable nextant
 
-# Start indexing on the background
-hide_output sudo -u www-data php /usr/local/lib/owncloud/occ nextant:index --background --unlock
+	# Do not hide output - these tests are pretty nice 0:) 
+	sudo -u www-data php /usr/local/lib/owncloud/occ nextant:test http://127.0.0.1:8983/solr/ nextant --save
+	
+	# Start indexing on the background
+	hide_output sudo -u www-data php /usr/local/lib/owncloud/occ nextant:index --background --unlock
+fi
 
 # When upgrading, run the upgrade script again now that apps are enabled. It seems like
 # the first upgrade at the top won't work because apps may be disabled during upgrade?
@@ -598,4 +629,7 @@ chmod +x /etc/cron.hourly/mailinabox-owncloud
 
 # Enable PHP modules and restart PHP.
 restart_service php7.0-fpm
-restart_service solr
+
+if test "$SOLR_INSTALLED" = "yes"; then
+	restart_service solr
+fi
