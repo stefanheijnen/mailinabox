@@ -25,8 +25,8 @@ Features
 Disadvantages
 -------------
 
-* lack of dovecot-lucene in Ubuntu 16.04 brought me to a decision to don't include fulltext search into the roundcube (all modern email clients have this already installed)
-* sometimes, I may not notice updates in upstream - in that case you may easilly rebase their changes on top of my master as shown in the Quick Install section
+* lack of dovecot-lucene in Ubuntu 16.04 brought me to a decision to don't include fulltext search into the roundcube
+    * but that seems not to be an issue because all modern email clients have this already installed
 
 Quick Install
 -------------
@@ -42,9 +42,13 @@ git checkout v0.25-ubuntu16
 setup/start.sh
 ```
 
+## Toubleshooting
+
+In case of some trouble, please issue `setup/start.sh` command once again. If that doesn't help, please also try this command:
+```bash
+INSTALL_NEXTANT=no setup/start.sh
+```
+
+Otherwise, you are welcome to [file a new issue](https://github.com/jirislav/mailinabox/issues/new).
+
 For further info, see [the original documentation for obtaining mail-in-a-box](https://mailinabox.email/guide.html).
-
-Troubleshooting
----------------
-
-Feel free to email me at [developer@jkozlovsky.cz](mailto:developer@jkozlovsky.cz) or [start an Issue here](https://github.com/jirislav/mailinabox/issues/new), at my fork - describing your problem deep enough.
