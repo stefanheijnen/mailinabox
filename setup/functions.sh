@@ -179,7 +179,16 @@ function wget_verify {
 	DEST=$3
 	CHECKSUM="$HASH  $DEST"
 	rm -f $DEST
-	wget -q -O $DEST $URL || exit 1
+
+	wget -q -O $DEST $URL
+
+	# If wget fails, then is echoed the failure & instead of exiting it's returned the return code
+	local RV=$?
+	if test $RV -ne 0; then
+		echo "Failed downloading '$URL' !" >&2
+		return $RV
+	fi
+
 	if ! echo "$CHECKSUM" | sha1sum --check --strict > /dev/null; then
 		echo "------------------------------------------------------------"
 		echo "Download of $URL did not match expected checksum."

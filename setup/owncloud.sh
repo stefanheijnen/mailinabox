@@ -227,7 +227,7 @@ InstallNextcloud() {
 	rm -rf /usr/local/lib/owncloud
 
 	# Download and verify
-	wget_verify https://download.nextcloud.com/server/releases/nextcloud-$version.zip $hash /tmp/nextcloud.zip
+	wget_verify https://download.nextcloud.com/server/releases/nextcloud-$version.zip $hash /tmp/nextcloud.zip || exit 1
 
 	# Extract ownCloud/Nextcloud
 	unzip -q /tmp/nextcloud.zip -d /usr/local/lib
@@ -238,16 +238,16 @@ InstallNextcloud() {
 	# their github repositories.
 	mkdir -p /usr/local/lib/owncloud/apps
 
-	wget_verify https://github.com/nextcloud/contacts/releases/download/v1.5.3/contacts.tar.gz 78c4d49e73f335084feecd4853bd8234cf32615e /tmp/contacts.tgz
+	wget_verify https://github.com/nextcloud/contacts/releases/download/v1.5.3/contacts.tar.gz 78c4d49e73f335084feecd4853bd8234cf32615e /tmp/contacts.tgz || exit 1
 	tar xf /tmp/contacts.tgz -C /usr/local/lib/owncloud/apps/
 	rm /tmp/contacts.tgz
 
-	wget_verify https://github.com/nextcloud/calendar/releases/download/v1.5.3/calendar.tar.gz b370352d1f280805cc7128f78af4615f623827f8 /tmp/calendar.tgz
+	wget_verify https://github.com/nextcloud/calendar/releases/download/v1.5.3/calendar.tar.gz b370352d1f280805cc7128f78af4615f623827f8 /tmp/calendar.tgz || exit 1
 	tar xf /tmp/calendar.tgz -C /usr/local/lib/owncloud/apps/
 	rm /tmp/calendar.tgz
     
     local SPREED_VERSION=2.0.1
-    wget_verify https://github.com/nextcloud/spreed/archive/v${SPREED_VERSION}.tar.gz 6b768afd685e84bef3414c4af734734f47b35298 /tmp/spreed.tgz
+    wget_verify https://github.com/nextcloud/spreed/archive/v${SPREED_VERSION}.tar.gz 6b768afd685e84bef3414c4af734734f47b35298 /tmp/spreed.tgz || exit 1
     tar xf /tmp/spreed.tgz -C /usr/local/lib/owncloud/apps/
     rm /tmp/spreed.tgz
     mv /usr/local/lib/owncloud/apps/spreed-${SPREED_VERSION} /usr/local/lib/owncloud/apps/spreed
@@ -261,7 +261,7 @@ InstallNextcloud() {
 		local NEXTANT_VERSION=1.0.8
 		local NEXTANT_HASH=ebfbcb028583608e3fa7b9697facc626253dd002
 
-		wget_verify https://github.com/nextcloud/nextant/releases/download/v${NEXTANT_VERSION}/nextant-${NEXTANT_VERSION}.tar.gz "${NEXTANT_HASH}" /tmp/nextant.tgz
+		wget_verify https://github.com/nextcloud/nextant/releases/download/v${NEXTANT_VERSION}/nextant-${NEXTANT_VERSION}.tar.gz "${NEXTANT_HASH}" /tmp/nextant.tgz || exit 1
 		tar xf /tmp/nextant.tgz -C /usr/local/lib/owncloud/apps/
 		rm /tmp/nextant.tgz
 	fi
@@ -309,7 +309,7 @@ InstallOwncloud() {
 	rm -rf /usr/local/lib/owncloud
 
 	# Download and verify
-	wget_verify https://download.owncloud.org/community/owncloud-$version.zip $hash /tmp/owncloud.zip
+	wget_verify https://download.owncloud.org/community/owncloud-$version.zip $hash /tmp/owncloud.zip || exit 1
 
 
 	# Extract ownCloud
@@ -320,11 +320,11 @@ InstallOwncloud() {
 	# their github repositories.
 	mkdir -p /usr/local/lib/owncloud/apps
 
-	wget_verify https://github.com/owncloud/contacts/releases/download/v1.4.0.0/contacts.tar.gz c1c22d29699456a45db447281682e8bc3f10e3e7 /tmp/contacts.tgz
+	wget_verify https://github.com/owncloud/contacts/releases/download/v1.4.0.0/contacts.tar.gz c1c22d29699456a45db447281682e8bc3f10e3e7 /tmp/contacts.tgz || exit 1
 	tar xf /tmp/contacts.tgz -C /usr/local/lib/owncloud/apps/
 	rm /tmp/contacts.tgz
 
-	wget_verify https://github.com/nextcloud/calendar/releases/download/v1.4.0/calendar.tar.gz c84f3170efca2a99ea6254de34b0af3cb0b3a821 /tmp/calendar.tgz
+	wget_verify https://github.com/nextcloud/calendar/releases/download/v1.4.0/calendar.tar.gz c84f3170efca2a99ea6254de34b0af3cb0b3a821 /tmp/calendar.tgz || exit 1
 	tar xf /tmp/calendar.tgz -C /usr/local/lib/owncloud/apps/
 	rm /tmp/calendar.tgz
 

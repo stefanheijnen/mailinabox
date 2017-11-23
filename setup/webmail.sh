@@ -63,7 +63,8 @@ if [ $needs_update == 1 ]; then
 	wget_verify \
 		https://github.com/roundcube/roundcubemail/releases/download/$VERSION/roundcubemail-$VERSION-complete.tar.gz \
 		$HASH \
-		/tmp/roundcube.tgz
+		/tmp/roundcube.tgz \
+		|| exit 1
 	tar -C /usr/local/lib --no-same-owner -zxf /tmp/roundcube.tgz
 	rm -rf /usr/local/lib/roundcubemail
 	mv /usr/local/lib/roundcubemail-$VERSION/ $RCM_DIR
@@ -79,7 +80,8 @@ if [ $needs_update == 1 ]; then
 	wget_verify \
 		https://github.com/blind-coder/rcmcarddav/releases/download/v${CARDDAV_VERSION}/carddav-${CARDDAV_VERSION}.zip \
 		$CARDDAV_HASH \
-		/tmp/carddav.zip
+		/tmp/carddav.zip \
+		|| exit 1
 
 	# unzip and cleanup
 	unzip -q /tmp/carddav.zip -d ${RCM_PLUGIN_DIR}

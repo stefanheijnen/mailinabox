@@ -32,7 +32,7 @@ elif [[ $TARGETHASH != `cat /usr/local/lib/z-push/version` ]]; then
 	needs_update=1 #NODOC
 fi
 if [ $needs_update == 1 ]; then
-	wget_verify http://download.z-push.org/final/2.3/z-push-$VERSION.tar.gz $TARGETHASH /tmp/z-push.tar.gz
+	wget_verify http://download.z-push.org/final/2.3/z-push-$VERSION.tar.gz $TARGETHASH /tmp/z-push.tar.gz || exit 1
 
 	rm -rf /usr/local/lib/z-push
 	tar -xzf /tmp/z-push.tar.gz -C /usr/local/lib/
