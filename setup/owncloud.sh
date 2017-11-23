@@ -24,49 +24,57 @@ apt_install php7.0 php7.0-fpm \
 
 # Migrate <= v0.10 setups that stored the ownCloud config.php in /usr/local rather than
 # in STORAGE_ROOT. Move the file to STORAGE_ROOT.
-if [ ! -f $STORAGE_ROOT/owncloud/config.php ] \
+if [ ! -f ${STORAGE_ROOT}/owncloud/config.php ] \
 	&& [ -f /usr/local/lib/owncloud/config/config.php ]; then
 
 	# Move config.php and symlink back into previous location.
 	echo "Migrating owncloud/config.php to new location."
-	mv /usr/local/lib/owncloud/config/config.php $STORAGE_ROOT/owncloud/config.php \
+	mv /usr/local/lib/owncloud/config/config.php ${STORAGE_ROOT}/owncloud/config.php \
 		&& \
-	ln -sf $STORAGE_ROOT/owncloud/config.php /usr/local/lib/owncloud/config/config.php
+	ln -sf ${STORAGE_ROOT}/owncloud/config.php /usr/local/lib/owncloud/config/config.php
 fi
 
 InstallSolr() {
 
-	local SOLR_VERSION=6.6.0
-	echo "Installing solr version $SOLR_VERSION"
+	# Solr version to download
+	local SOLR_VERSION=6.6.2
+	echo "Installing solr version ${SOLR_VERSION}"
+
+	# sha1sum get with:
+	# curl -s ftp://mirror.hosting90.cz/apache/lucene/solr/6.6.2/solr-6.6.2.tgz | sha1sum
+	local SOLR_HASH=e4a772a7770010f85bfce26a39520584a85d5c3f
+
+	local APACHE_FTP_MIRROR=http://archive.apache.org/dist
+	#local APACHE_FTP_MIRROR=ftp://mirror.hosting90.cz/apache
 
 	# Also prepare for nextant with solr
 	apt_install openjdk-8-jdk tesseract-ocr
 
-	local SOLR_PATH=/usr/local/lib/solr
-	local SOLR_DATA=$STORAGE_ROOT/solr/data
-	wget_verify ftp://mirror.hosting90.cz/apache/lucene/solr/${SOLR_VERSION}/solr-${SOLR_VERSION}.tgz 88add027c90adfdaaaeb335aa02394bfd7015f18 /tmp/solr.tgz
+	local SOLR_PATH="/usr/local/lib/solr"
+	local SOLR_DATA="${STORAGE_ROOT}/solr/data"
+	wget_verify "${APACHE_FTP_MIRROR}/lucene/solr/${SOLR_VERSION}/solr-${SOLR_VERSION}.tgz" "${SOLR_HASH}" /tmp/solr.tgz
 	tar xf /tmp/solr.tgz -C /usr/local/lib/
-	mv /usr/local/lib/solr-${SOLR_VERSION} $SOLR_PATH
+	mv "/usr/local/lib/solr-${SOLR_VERSION}" "${SOLR_PATH}"
 
 	# Listen only on localhost
-	if grep -q '<Property name="jetty.host" />' $SOLR_PATH/server/etc/jetty-http.xml; then
-		sed -i 's,<Property name="jetty.host" />,<Property name="jetty.host" default="127.0.0.1" />,g' $SOLR_PATH/server/etc/jetty-http.xml
+	if grep -q '<Property name="jetty.host" />' "${SOLR_PATH}/server/etc/jetty-http.xml"; then
+		sed -i 's,<Property name="jetty.host" />,<Property name="jetty.host" default="127.0.0.1" />,g' "${SOLR_PATH}/server/etc/jetty-http.xml"
 	fi
 
 	# We won't run solr as root, as it is a huge security risk
 	useradd solr &>/dev/null
 
-	mkdir -p $STORAGE_ROOT/solr/log
+	mkdir -p "${STORAGE_ROOT}/solr/log"
 
 	# Create basic configset for nextant
-	if test ! -d $SOLR_DATA/nextant; then
-		cp -rf $SOLR_PATH/server/solr/{configsets/basic_configs,nextant}
-		mv $SOLR_PATH/server/solr $SOLR_DATA
+	if test ! -d ${SOLR_DATA}/nextant; then
+		cp -rf ${SOLR_PATH}/server/solr/{configsets/basic_configs,nextant}
+		mv ${SOLR_PATH}/server/solr ${SOLR_DATA}
 	fi
-	ln -sf $SOLR_DATA $SOLR_PATH/server/solr
+	ln -sf ${SOLR_DATA} ${SOLR_PATH}/server/solr
 
-	if test -d /etc/systemd && test ! -f $STORAGE_ROOT/solr/systemd.service; then
-		cat > $STORAGE_ROOT/solr/solr.service <<EOF
+	if test -d /etc/systemd && test ! -f ${STORAGE_ROOT}/solr/systemd.service; then
+		cat > ${STORAGE_ROOT}/solr/solr.service <<EOF
 [Unit]
 Description=Apache Solr for Nextcloud's nextant app fulltext indexing
 After=syslog.target network.target remote-fs.target nss-lookup.target systemd-journald-dev-log.socket
@@ -76,18 +84,18 @@ Before=nginx.service
 Type=forking
 User=solr
 Group=solr
-WorkingDirectory=$SOLR_PATH/server
-ExecStart=$SOLR_PATH/bin/solr start -m 256m -Dsolr.log.dir=$STORAGE_ROOT/solr/log
-ExecStop=$SOLR_PATH/bin/solr stop
+WorkingDirectory=${SOLR_PATH}/server
+ExecStart=${SOLR_PATH}/bin/solr start -m 256m -Dsolr.log.dir=${STORAGE_ROOT}/solr/log
+ExecStop=${SOLR_PATH}/bin/solr stop
 Restart=on-failure
 
 [Install]
 WantedBy=multi-user.target
 EOF
-		systemctl enable $STORAGE_ROOT/solr/solr.service
+		systemctl enable ${STORAGE_ROOT}/solr/solr.service
 		systemctl daemon-reload
 	else
-		cat > $STORAGE_ROOT/solr/initd.sh <<EOF
+		cat > ${STORAGE_ROOT}/solr/initd.sh <<EOF
 #!/bin/sh
 ### BEGIN INIT INFO
 # Provides:          solr
@@ -101,15 +109,15 @@ EOF
 
 # Author: jirislav <mail@jkozlovsky.cz>
 
-SOLR_PATH="$SOLR_PATH"
+SOLR_PATH="${SOLR_PATH}"
 
 # -force is only required if running solr as root
 start() {
-	su solr -c "\$SOLR_PATH/bin/solr start"
+	su solr -c "\${SOLR_PATH}/bin/solr start"
 }
 
 stop() {
-	su solr -c "\$SOLR_PATH/bin/solr stop"
+	su solr -c "\${SOLR_PATH}/bin/solr stop"
 }
 
 case "\$1" in
@@ -125,55 +133,55 @@ case "\$1" in
 esac
 exit \$?
 EOF
-		ln -sf $STORAGE_ROOT/solr/initd.sh /etc/init.d/solr 
-		chmod +x $STORAGE_ROOT/solr/initd.sh
+		ln -sf ${STORAGE_ROOT}/solr/initd.sh /etc/init.d/solr 
+		chmod +x ${STORAGE_ROOT}/solr/initd.sh
 		update-rc.d solr defaults
 		update-rc.d solr enable
 	fi
 
-	chown solr: $SOLR_PATH $SOLR_DATA -R
+	chown solr: ${SOLR_PATH} ${SOLR_DATA} -R
 
 	echo "Starting solr to manually create an index for nextant ..."
-	su solr -c "$SOLR_PATH/bin/solr start"
+	su solr -c "${SOLR_PATH}/bin/solr start"
 
 	echo "Creating index for nextant ..."
-	su solr -c "$SOLR_PATH/bin/solr create -c nextant"
+	su solr -c "${SOLR_PATH}/bin/solr create -c nextant"
 
 	echo "Shutting down solr ..."
-	su solr -c "$SOLR_PATH/bin/solr stop"
+	su solr -c "${SOLR_PATH}/bin/solr stop"
 
 	restart_service solr
 }
 
 ResetNextAntConfig() {
 	# Disable live indexing into mysql because we're not using MySQL ..
-	sqlite3 $STORAGE_ROOT/owncloud/owncloud.db "INSERT OR IGNORE INTO oc_appconfig VALUES ('nextant', 'index_live', '0')"
+	sqlite3 ${STORAGE_ROOT}/owncloud/owncloud.db "INSERT OR IGNORE INTO oc_appconfig VALUES ('nextant', 'index_live', '0')"
 
 	# Index files, files tree & trash 
-	sqlite3 $STORAGE_ROOT/owncloud/owncloud.db "INSERT OR IGNORE INTO oc_appconfig VALUES ('nextant', 'index_files', '1')"
-	sqlite3 $STORAGE_ROOT/owncloud/owncloud.db "INSERT OR IGNORE INTO oc_appconfig VALUES ('nextant', 'index_files_tree', '1')"
-	sqlite3 $STORAGE_ROOT/owncloud/owncloud.db "INSERT OR IGNORE INTO oc_appconfig VALUES ('nextant', 'index_files_trash', '1')"
+	sqlite3 ${STORAGE_ROOT}/owncloud/owncloud.db "INSERT OR IGNORE INTO oc_appconfig VALUES ('nextant', 'index_files', '1')"
+	sqlite3 ${STORAGE_ROOT}/owncloud/owncloud.db "INSERT OR IGNORE INTO oc_appconfig VALUES ('nextant', 'index_files_tree', '1')"
+	sqlite3 ${STORAGE_ROOT}/owncloud/owncloud.db "INSERT OR IGNORE INTO oc_appconfig VALUES ('nextant', 'index_files_trash', '1')"
 
 	# Let nextant take high resources when performing fulltext search
-	sqlite3 $STORAGE_ROOT/owncloud/owncloud.db "INSERT OR IGNORE INTO oc_appconfig VALUES ('nextant', 'resource_level', '4')"
+	sqlite3 ${STORAGE_ROOT}/owncloud/owncloud.db "INSERT OR IGNORE INTO oc_appconfig VALUES ('nextant', 'resource_level', '4')"
 
 	# Ensure there will be regular cron indexing
-	sqlite3 $STORAGE_ROOT/owncloud/owncloud.db "INSERT OR IGNORE INTO oc_appconfig VALUES ('nextant', 'use_cron', '1')"
+	sqlite3 ${STORAGE_ROOT}/owncloud/owncloud.db "INSERT OR IGNORE INTO oc_appconfig VALUES ('nextant', 'use_cron', '1')"
 
 	# Timeout at least 1 minute
-	sqlite3 $STORAGE_ROOT/owncloud/owncloud.db "INSERT OR IGNORE INTO oc_appconfig VALUES ('nextant', 'solr_timeout', '60')"
+	sqlite3 ${STORAGE_ROOT}/owncloud/owncloud.db "INSERT OR IGNORE INTO oc_appconfig VALUES ('nextant', 'solr_timeout', '60')"
 
 	# Do not force user to configure from the admin module (marking as already configured)..
-	sqlite3 $STORAGE_ROOT/owncloud/owncloud.db "INSERT OR IGNORE INTO oc_appconfig VALUES ('nextant', 'configured', '2')"
+	sqlite3 ${STORAGE_ROOT}/owncloud/owncloud.db "INSERT OR IGNORE INTO oc_appconfig VALUES ('nextant', 'configured', '2')"
 
 	# Insert all supported file types
 	for file_type in `echo text pdf office image`; do
-		sqlite3 $STORAGE_ROOT/owncloud/owncloud.db "INSERT OR IGNORE INTO oc_appconfig VALUES ('nextant', 'index_files_filters_$file_type', '1')"
+		sqlite3 ${STORAGE_ROOT}/owncloud/owncloud.db "INSERT OR IGNORE INTO oc_appconfig VALUES ('nextant', 'index_files_filters_$file_type', '1')"
 	done
 
 	# Do not index only audio for now ..
 	for file_type in `echo audio`; do
-		sqlite3 $STORAGE_ROOT/owncloud/owncloud.db "INSERT OR IGNORE INTO oc_appconfig VALUES ('nextant', 'index_files_filters_$file_type', '0')"
+		sqlite3 ${STORAGE_ROOT}/owncloud/owncloud.db "INSERT OR IGNORE INTO oc_appconfig VALUES ('nextant', 'index_files_filters_$file_type', '0')"
 	done
 }
 
@@ -217,14 +225,16 @@ InstallNextcloud() {
 
 	INSTALL_NEXTANT="yes"
 
-	if test $INSTALL_NEXTANT = "yes"; then
+	if test ${INSTALL_NEXTANT} = "yes"; then
 		#
 		# Install nextant to the nextcloud
 		# but first solr installation is needed ..
 		InstallSolr
 
 		local NEXTANT_VERSION=1.0.8
-		wget_verify https://github.com/nextcloud/nextant/releases/download/v${NEXTANT_VERSION}/nextant-${NEXTANT_VERSION}.tar.gz  ebfbcb028583608e3fa7b9697facc626253dd002 /tmp/nextant.tgz
+		local NEXTANT_HASH=ebfbcb028583608e3fa7b9697facc626253dd002
+
+		wget_verify https://github.com/nextcloud/nextant/releases/download/v${NEXTANT_VERSION}/nextant-${NEXTANT_VERSION}.tar.gz "${NEXTANT_HASH}" /tmp/nextant.tgz
 		tar xf /tmp/nextant.tgz -C /usr/local/lib/owncloud/apps/
 		rm /tmp/nextant.tgz
 	fi
@@ -235,16 +245,16 @@ InstallNextcloud() {
 
 	# Create a symlink to the config.php in STORAGE_ROOT (for upgrades we're restoring the symlink we previously
 	# put in, and in new installs we're creating a symlink and will create the actual config later).
-	ln -sf $STORAGE_ROOT/owncloud/config.php /usr/local/lib/owncloud/config/config.php
+	ln -sf ${STORAGE_ROOT}/owncloud/config.php /usr/local/lib/owncloud/config/config.php
 
 	# Make sure permissions are correct or the upgrade step won't run.
-	# $STORAGE_ROOT/owncloud may not yet exist, so use -f to suppress
+	# ${STORAGE_ROOT}/owncloud may not yet exist, so use -f to suppress
 	# that error.
-	chown -f -R www-data.www-data $STORAGE_ROOT/owncloud /usr/local/lib/owncloud
+	chown -f -R www-data.www-data ${STORAGE_ROOT}/owncloud /usr/local/lib/owncloud
 
 	# If this isn't a new installation, immediately run the upgrade script.
 	# Then check for success (0=ok and 3=no upgrade needed, both are success).
-	if [ -e $STORAGE_ROOT/owncloud/owncloud.db ]; then
+	if [ -e ${STORAGE_ROOT}/owncloud/owncloud.db ]; then
 		# ownCloud 8.1.1 broke upgrades. It may fail on the first attempt, but
 		# that can be OK.
 		sudo -u www-data php /usr/local/lib/owncloud/occ upgrade
@@ -296,16 +306,16 @@ InstallOwncloud() {
 
 	# Create a symlink to the config.php in STORAGE_ROOT (for upgrades we're restoring the symlink we previously
 	# put in, and in new installs we're creating a symlink and will create the actual config later).
-	ln -sf $STORAGE_ROOT/owncloud/config.php /usr/local/lib/owncloud/config/config.php
+	ln -sf ${STORAGE_ROOT}/owncloud/config.php /usr/local/lib/owncloud/config/config.php
 
 	# Make sure permissions are correct or the upgrade step won't run.
-	# $STORAGE_ROOT/owncloud may not yet exist, so use -f to suppress
+	# ${STORAGE_ROOT}/owncloud may not yet exist, so use -f to suppress
 	# that error.
-	chown -f -R www-data.www-data $STORAGE_ROOT/owncloud /usr/local/lib/owncloud
+	chown -f -R www-data.www-data ${STORAGE_ROOT}/owncloud /usr/local/lib/owncloud
 
 	# If this isn't a new installation, immediately run the upgrade script.
 	# Then check for success (0=ok and 3=no upgrade needed, both are success).
-	if [ -e $STORAGE_ROOT/owncloud/owncloud.db ]; then
+	if [ -e ${STORAGE_ROOT}/owncloud/owncloud.db ]; then
 		# ownCloud 8.1.1 broke upgrades. It may fail on the first attempt, but
 		# that can be OK.
 		sudo -u www-data php5 /usr/local/lib/owncloud/occ upgrade
@@ -332,7 +342,7 @@ if [ ! -d /usr/local/lib/owncloud/ ] \
 
 	# Backup the existing ownCloud/Nextcloud.
 	# Create a backup directory to store the current installation and database to
-	BACKUP_DIRECTORY=$STORAGE_ROOT/owncloud-backup/`date +"%Y-%m-%d-%T"`
+	BACKUP_DIRECTORY=${STORAGE_ROOT}/owncloud-backup/`date +"%Y-%m-%d-%T"`
 	mkdir -p "$BACKUP_DIRECTORY"
 	if [ -d /usr/local/lib/owncloud/ ]; then
 		echo "upgrading ownCloud/Nextcloud to $owncloud_flavor $owncloud_ver (backing up existing installation, configuration and database to directory to $BACKUP_DIRECTORY..."
@@ -359,9 +369,9 @@ if [ ! -d /usr/local/lib/owncloud/ ] \
 			# We need to disable memcached. The upgrade and install fails
 			# with memcached
 			CONFIG_TEMP=$(/bin/mktemp)
-			php <<EOF > $CONFIG_TEMP && mv $CONFIG_TEMP $STORAGE_ROOT/owncloud/config.php;
+			php <<EOF > $CONFIG_TEMP && mv $CONFIG_TEMP ${STORAGE_ROOT}/owncloud/config.php;
 			<?php
-				include("$STORAGE_ROOT/owncloud/config.php");
+				include("${STORAGE_ROOT}/owncloud/config.php");
 
 				\$CONFIG['memcache.local'] = '\OC\Memcache\APCu';
 
@@ -370,7 +380,7 @@ if [ ! -d /usr/local/lib/owncloud/ ] \
 				echo ";";
 			?>
 EOF
-			chown www-data.www-data $STORAGE_ROOT/owncloud/config.php
+			chown www-data.www-data ${STORAGE_ROOT}/owncloud/config.php
 
 			# We can now install owncloud 9.0.2
 			InstallOwncloud 9.0.2 72a3d15d09f58c06fa8bee48b9e60c9cd356f9c5
@@ -380,7 +390,7 @@ EOF
 			# So the migrations should be done when we have 9.0 installed
 			sudo -u www-data php5 /usr/local/lib/owncloud/occ dav:migrate-addressbooks
 			# The following migration has to be done for each owncloud user
-			for directory in $STORAGE_ROOT/owncloud/*@*/ ; do
+			for directory in ${STORAGE_ROOT}/owncloud/*@*/ ; do
 				username=$(basename "${directory}")
 				sudo -u www-data php5 /usr/local/lib/owncloud/occ dav:migrate-calendar $username
 			done
@@ -414,16 +424,16 @@ fi
 
 # Setup Nextcloud if the Nextcloud database does not yet exist. Running setup when
 # the database does exist wipes the database and user data.
-if [ ! -f $STORAGE_ROOT/owncloud/owncloud.db ]; then
+if [ ! -f ${STORAGE_ROOT}/owncloud/owncloud.db ]; then
 	# Create user data directory
-	mkdir -p $STORAGE_ROOT/owncloud
+	mkdir -p ${STORAGE_ROOT}/owncloud
 
 	# Create an initial configuration file.
 	instanceid=oc$(echo $PRIMARY_HOSTNAME | sha1sum | fold -w 10 | head -n 1)
-	cat > $STORAGE_ROOT/owncloud/config.php <<EOF
+	cat > ${STORAGE_ROOT}/owncloud/config.php <<EOF
 <?php
 \$CONFIG = array (
-  'datadirectory' => '$STORAGE_ROOT/owncloud',
+  'datadirectory' => '${STORAGE_ROOT}/owncloud',
 
   'instanceid' => '$instanceid',
 
@@ -459,7 +469,7 @@ EOF
 <?php
 \$AUTOCONFIG = array (
   # storage/database
-  'directory' => '$STORAGE_ROOT/owncloud',
+  'directory' => '${STORAGE_ROOT}/owncloud',
   'dbtype' => 'sqlite3',
 
   # create an administrator account with a random password so that
@@ -471,7 +481,7 @@ EOF
 EOF
 
 	# Set permissions
-	chown -R www-data.www-data $STORAGE_ROOT/owncloud /usr/local/lib/owncloud
+	chown -R www-data.www-data ${STORAGE_ROOT}/owncloud /usr/local/lib/owncloud
 
 	# Execute Nextcloud's setup step, which creates the Nextcloud sqlite database.
 	# It also wipes it if it exists. And it updates config.php with database
@@ -494,9 +504,9 @@ ResetNextAntConfig
 # Use PHP to read the settings file, modify it, and write out the new settings array.
 TIMEZONE=$(cat /etc/timezone)
 CONFIG_TEMP=$(/bin/mktemp)
-php <<EOF > $CONFIG_TEMP && mv $CONFIG_TEMP $STORAGE_ROOT/owncloud/config.php
+php <<EOF > $CONFIG_TEMP && mv $CONFIG_TEMP ${STORAGE_ROOT}/owncloud/config.php
 <?php
-include("$STORAGE_ROOT/owncloud/config.php");
+include("${STORAGE_ROOT}/owncloud/config.php");
 
 \$CONFIG['trusted_domains'] = array('$PRIMARY_HOSTNAME');
 
@@ -514,7 +524,7 @@ var_export(\$CONFIG);
 echo ";";
 ?>
 EOF
-chown www-data.www-data $STORAGE_ROOT/owncloud/config.php
+chown www-data.www-data ${STORAGE_ROOT}/owncloud/config.php
 
 # Enable/disable apps. Note that this must be done after the Nextcloud setup.
 # The firstrunwizard gave Josh all sorts of problems, so disabling that.
@@ -582,7 +592,7 @@ chmod +x /etc/cron.hourly/mailinabox-owncloud
 # But if we wanted to, we would do this:
 # ```
 # for user in $(tools/mail.py user admins); do
-#	 sqlite3 $STORAGE_ROOT/owncloud/owncloud.db "INSERT OR IGNORE INTO oc_group_user VALUES ('admin', '$user')"
+#	 sqlite3 ${STORAGE_ROOT}/owncloud/owncloud.db "INSERT OR IGNORE INTO oc_group_user VALUES ('admin', '$user')"
 # done
 # ```
 
