@@ -51,6 +51,8 @@ hide_output pip3 install --upgrade \
 # duplicity uses python 2 so we need to get the python 2 package of boto to have backups to S3.
 # boto from the Ubuntu package manager is too out-of-date -- it doesn't support the newer
 # S3 api used in some regions, which breaks backups to those regions.  See #627, #653.
+# But first we need to install setuptools for Ubuntu 16.04 compatibility
+hide_output pip2 install --upgrade setuptools
 hide_output pip2 install --upgrade boto
 
 # CONFIGURATION
