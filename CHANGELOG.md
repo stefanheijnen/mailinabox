@@ -1,6 +1,31 @@
 CHANGELOG
 =========
 
+v0.26 (January 18, 2018)
+------------------------
+
+Security:
+
+* HTTPS, IMAP, and POP's TLS settings have been updated to Mozilla's intermediate cipher list recommendation. Some extremely old devices that use less secure TLS ciphers may no longer be able to connect to IMAP/POP.
+* Updated web HSTS header to use longer six month duration.
+
+Mail:
+
+* Adding attachments in Roundcube broke after the last update for some users after rebooting because a temporary directory was deleted on reboot. The temporary directory is now moved from /tmp to /var so that it is persistent.
+* `X-Spam-Score` header is added to incoming mail.
+
+Control panel:
+
+* RSASHA256 is now used for DNSSEC for .lv domains.
+* Some documentation/links improvements.
+
+Installer:
+
+* We now run `apt-get autoremove` at the start of setup to clear out old packages, especially old kernels that take up a lot of space. On the first run, this step may take a long time.
+* We now fetch Z-Push from its tagged git repository, fixing an installation problem.
+* Some old PHP5 packages are removed from setup, fixing an installation bug where Apache would get installed.
+* Python 3 packages for the control panel are now installed using a virtualenv to prevent installation errors.
+
 v0.25 (November 15, 2017)
 -------------------------
 
@@ -12,7 +37,7 @@ Mail:
 
 Control Panel:
 
-* Fix DNS validation to allow wildcard custom DNS entries to be set.
+* Allow custom DNS records to be set for DNS wildcard subdomains (i.e. `*`).
 
 v0.24 (October 3, 2017)
 -----------------------

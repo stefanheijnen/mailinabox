@@ -96,6 +96,12 @@ echo Updating system packages...
 hide_output apt-get update
 apt_get_quiet upgrade
 
+# Old kernels pile up over time and take up a lot of disk space, and because of Mail-in-a-Box
+# changes there may be other packages that are no longer needed. Clear out anything apt knows
+# is safe to delete.
+
+apt_get_quiet autoremove
+
 # ### Install System Packages
 
 # Install basic utilities.
@@ -123,12 +129,13 @@ apt_install python3 python3-dev python3-pip \
 
 # Nextcloud requires PHP7, we will install the ppa from ubuntu php maintainer Ondřej Surý
 # The PPA is located here https://launchpad.net/%7Eondrej/+archive/ubuntu/php
-# Unattended upgrades are activated for the repository
-
-# hide_output add-apt-repository -y ppa:ondrej/php
-# apt_add_repository_to_unattended_upgrades LP-PPA-ondrej-php:trusty
-# hide_output apt-get update
-
+# Unattended upgrades are activated for the repository If it appears it's already
+# installed, don't do it again so we can avoid an unnecessary call to apt-get update.
+#if [ ! -f /etc/apt/sources.list.d/ondrej-php-trusty.list ]; then
+#hide_output add-apt-repository -y ppa:ondrej/php
+#apt_add_repository_to_unattended_upgrades LP-PPA-ondrej-php:trusty
+#hide_output apt-get update
+#fi
 
 # ### Suppress Upgrade Prompts
 # Since Mail-in-a-Box might jump straight to 18.04 LTS, there's no need
@@ -241,7 +248,7 @@ cat > /etc/apt/apt.conf.d/02periodic <<EOF;
 APT::Periodic::MaxAge "7";
 APT::Periodic::Update-Package-Lists "1";
 APT::Periodic::Unattended-Upgrade "1";
-APT::Periodic::Verbose "1";
+APT::Periodic::Verbose "0";
 EOF
 
 # ### Firewall
