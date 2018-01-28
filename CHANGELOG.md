@@ -1,6 +1,13 @@
 CHANGELOG
 =========
 
+v0.26b (January 25, 2018)
+-------------------------
+
+* Fix new installations which broke at the step of asking for the user's desired email address, which was broken by v0.26's changes related to the control panel.
+* Fix the provisioning of TLS certificates by pinning a Python package we rely on (acme) to an earlier version because our code isn't yet compatible with its current version.
+* Reduce munin's log_level from debug to warning to prevent massive log files.
+
 v0.26 (January 18, 2018)
 ------------------------
 
@@ -24,7 +31,7 @@ Installer:
 * We now run `apt-get autoremove` at the start of setup to clear out old packages, especially old kernels that take up a lot of space. On the first run, this step may take a long time.
 * We now fetch Z-Push from its tagged git repository, fixing an installation problem.
 * Some old PHP5 packages are removed from setup, fixing an installation bug where Apache would get installed.
-* Python 3 packages for the control panel are now installed using a virtualenv to prevent installation errors.
+* Python 3 packages for the control panel are now installed using a virtualenv to prevent installation errors due to conflicts in the cryptography/openssl packages between OS-installed packages and pip-installed packages.
 
 v0.25 (November 15, 2017)
 -------------------------
