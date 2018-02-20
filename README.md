@@ -36,7 +36,7 @@ Quick Install
 git clone https://github.com/jirislav/mailinabox.git
 cd mailinabox
 
-git checkout v0.26b-ubuntu16
+git checkout v0.26c-ubuntu16
 
 # Run installation
 setup/start.sh
