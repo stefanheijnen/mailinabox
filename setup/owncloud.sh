@@ -36,10 +36,10 @@ fi
 
 SuggestInstallationWithoutNextant() {
 	echo
-	echo "--------------------------------------------"
-	echo " You might want to try this command instead:"
+	echo "---------------------------------------------"
+	echo " You might want to omit Nextant installation:"
 	echo "INSTALL_NEXTANT=no setup/start.sh"
-	echo "--------------------------------------------"
+	echo "---------------------------------------------"
 }
 
 # Assume Solr was not installed
@@ -214,8 +214,9 @@ ResetNextAntConfig() {
 
 # Only set INSTALL_NEXTANT if not set previously (e.g. while running setup/start.sh)
 # Note: nextant is a Nextcloud plugin to provide fulltext search even in images
+# Note2: Nextant installation is being no longer supported by setup/start.sh script - if you want to install it manually, you can inspire from the code around here ..
 if test ! -v INSTALL_NEXTANT; then
-	INSTALL_NEXTANT="yes"
+	INSTALL_NEXTANT="no"
 fi
 
 InstallNextcloud() {
