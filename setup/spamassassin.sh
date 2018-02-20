@@ -133,6 +133,7 @@ chmod a+x /usr/local/bin/sa-learn-pipe.sh
 
 # Create empty bayes training data (if it doesn't exist). Once the files exist,
 # ensure they are group-writable so that the Dovecot process has access.
+echo " - launching spam learning process (this might take a while)"
 sudo -u spampd /usr/bin/sa-learn --sync 2>/dev/null
 chmod -R 660 $STORAGE_ROOT/mail/spamassassin
 chmod 770 $STORAGE_ROOT/mail/spamassassin

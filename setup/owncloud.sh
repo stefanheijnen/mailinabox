@@ -36,10 +36,10 @@ fi
 
 SuggestInstallationWithoutNextant() {
 	echo
-	echo "--------------------------------------------"
-	echo " You might want to try this command instead:"
+	echo "---------------------------------------------"
+	echo " You might want to omit Nextant installation:"
 	echo "INSTALL_NEXTANT=no setup/start.sh"
-	echo "--------------------------------------------"
+	echo "---------------------------------------------"
 }
 
 # Assume Solr was not installed
@@ -63,6 +63,10 @@ InstallSolr() {
 
 	local SOLR_PATH="/usr/local/lib/solr"
 	local SOLR_DATA="${STORAGE_ROOT}/solr/data"
+
+	# Before the solr installation begins, first kill running solr instance
+	ps faux | grep "solr\.home=${SOLR_PATH}" | awk '{print $2}' | xargs -I {} sh -c 'kill {} || kill -9 {}' &>/dev/null
+
 	wget_verify "${APACHE_FTP_MIRROR}/lucene/solr/${SOLR_VERSION}/solr-${SOLR_VERSION}.tgz" "${SOLR_HASH}" /tmp/solr.tgz
 
 	if test $? -ne 0; then
@@ -162,7 +166,7 @@ EOF
 	su solr -c "${SOLR_PATH}/bin/solr start"
 
 	echo "Creating index for nextant ..."
-	su solr -c "${SOLR_PATH}/bin/solr create -c nextant"
+	su solr -c "${SOLR_PATH}/bin/solr create -c nextant" || echo "nextant core is probably already created #TODO"
 
 	echo "Shutting down solr ..."
 	su solr -c "${SOLR_PATH}/bin/solr stop"
@@ -210,8 +214,9 @@ ResetNextAntConfig() {
 
 # Only set INSTALL_NEXTANT if not set previously (e.g. while running setup/start.sh)
 # Note: nextant is a Nextcloud plugin to provide fulltext search even in images
+# Note2: Nextant installation is being no longer supported by setup/start.sh script - if you want to install it manually, you can inspire from the code around here ..
 if test ! -v INSTALL_NEXTANT; then
-	INSTALL_NEXTANT="yes"
+	INSTALL_NEXTANT="no"
 fi
 
 InstallNextcloud() {
@@ -264,6 +269,10 @@ InstallNextcloud() {
 		wget_verify https://github.com/nextcloud/nextant/releases/download/v${NEXTANT_VERSION}/nextant-${NEXTANT_VERSION}.tar.gz "${NEXTANT_HASH}" /tmp/nextant.tgz || exit 1
 		tar xf /tmp/nextant.tgz -C /usr/local/lib/owncloud/apps/
 		rm /tmp/nextant.tgz
+	elif systemctl list-unit-files | grep -q solr.service; then
+		# Stop & disable solr service so that our resources are more available
+		systemctl stop solr.service &>/dev/null
+		systemctl disable solr.service &>/dev/null
 	fi
 
 
@@ -309,12 +318,12 @@ InstallOwncloud() {
 	rm -rf /usr/local/lib/owncloud
 
 	# Download and verify
-	wget_verify https://download.owncloud.org/community/owncloud-$version.zip $hash /tmp/owncloud.zip || exit 1
+	wget_verify https://download.owncloud.org/community/owncloud-$version.tar.bz2 $hash /tmp/owncloud.tar.bz2 || exit 1
 
 
 	# Extract ownCloud
-	unzip -q /tmp/owncloud.zip -d /usr/local/lib
-	rm -f /tmp/owncloud.zip
+	tar xjf /tmp/owncloud.tar.bz2 -C /usr/local/lib
+	rm -f /tmp/owncloud.tar.bz2
 
 	# The two apps we actually want are not in Nextcloud core. Download the releases from
 	# their github repositories.
@@ -356,8 +365,8 @@ InstallOwncloud() {
 	fi
 }
 
-owncloud_ver=12.0.3
-owncloud_hash=beab41f6a748a43f0accfa6a9808387aef718c61
+owncloud_ver=12.0.5
+owncloud_hash=d25afbac977a4e331f5e38df50aed0844498ca86
 
 # Check if Nextcloud dir exist, and check if version matches owncloud_ver (if either doesn't - install/upgrade)
 if [ ! -d /usr/local/lib/owncloud/ ] \
@@ -385,13 +394,13 @@ if [ ! -d /usr/local/lib/owncloud/ ] \
 	# We only need to check if we do upgrades when owncloud/Nextcloud was previously installed
 	if [ -e /usr/local/lib/owncloud/version.php ]; then
 		if grep -q "OC_VersionString = '8\.1\.[0-9]" /usr/local/lib/owncloud/version.php; then
-			echo "We are running 8.1.x, upgrading to 8.2.3 first"
-			InstallOwncloud 8.2.3 bfdf6166fbf6fc5438dc358600e7239d1c970613
+			echo "We are running 8.1.x, upgrading to 8.2.11 first"
+			InstallOwncloud 8.2.11 e4794938fc2f15a095018ba9d6ee18b53f6f299c
 		fi
 
 		# If we are upgrading from 8.2.x we should go to 9.0 first. Owncloud doesn't support skipping minor versions
 		if grep -q "OC_VersionString = '8\.2\.[0-9]" /usr/local/lib/owncloud/version.php; then
-			echo "We are running version 8.2.x, upgrading to 9.0.2 first"
+			echo "We are running version 8.2.x, upgrading to 9.0.11 first"
 
 			# We need to disable memcached. The upgrade and install fails
 			# with memcached
@@ -409,8 +418,8 @@ if [ ! -d /usr/local/lib/owncloud/ ] \
 EOF
 			chown www-data.www-data ${STORAGE_ROOT}/owncloud/config.php
 
-			# We can now install owncloud 9.0.2
-			InstallOwncloud 9.0.2 72a3d15d09f58c06fa8bee48b9e60c9cd356f9c5
+			# We can now install owncloud 9.0.11
+			InstallOwncloud 9.0.11 fc8bad8a62179089bc58c406b28997fb0329337b
 
 			# The owncloud 9 migration doesn't migrate calendars and contacts
 			# The option to migrate these are removed in 9.1
@@ -427,20 +436,26 @@ EOF
         
 		# If we are upgrading from 9.0.x we should go to 9.1 first.
 		if grep -q "OC_VersionString = '9\.0\.[0-9]" /usr/local/lib/owncloud/version.php; then
-			echo "We are running ownCloud 9.0.x, upgrading to ownCloud 9.1.4 first"
-			InstallOwncloud 9.1.4 e637cab7b2ca3346164f3506b1a0eb812b4e841a
+			echo "We are running ownCloud 9.0.x, upgrading to ownCloud 9.1.7 first"
+			InstallOwncloud 9.1.7 1307d997d0b23dc42742d315b3e2f11423a9c808
 		fi
 
-		# If we are upgrading from 9.1.x we should go to Nextcloud 10.0 first.
+		# Newer ownCloud 9.1.x versions cannot be upgraded to Nextcloud 10 and have to be
+		# upgraded to Nextcloud 11 straight away, see:
+		# https://github.com/nextcloud/server/issues/2203
+		# However, for some reason, upgrading to the latest Nextcloud 11.0.7 doesn't
+		# work either. Therefore, we're upgrading to Nextcloud 11.0.0 in the interim.
+		# This should not be a problem since we're upgrading to the latest Nextcloud 12
+		# in the next step.
 		if grep -q "OC_VersionString = '9\.1\.[0-9]" /usr/local/lib/owncloud/version.php; then
-			echo "We are running ownCloud 9.1.x, upgrading to Nextcloud 10.0.5 first"
-			InstallNextcloud 10.0.5 686f6a8e9d7867c32e3bf3ca63b3cc2020564bf6
+			echo "We are running ownCloud 9.1.x, upgrading to Nextcloud 11.0.0 first"
+			InstallNextcloud 11.0.0 e8c9ebe72a4a76c047080de94743c5c11735e72e
 		fi
 
 		# If we are upgrading from 10.0.x we should go to Nextcloud 11.0 first.
 		if grep -q "OC_VersionString = '10\.0\.[0-9]" /usr/local/lib/owncloud/version.php; then
-			echo "We are running Nextcloud 10.0.x, upgrading to Nextcloud 11.0.3 first"
-			InstallNextcloud 11.0.3 a396aaa1c9f920099a90a86b4a9cd0ec13083c99
+			echo "We are running Nextcloud 10.0.x, upgrading to Nextcloud 11.0.7 first"
+			InstallNextcloud 11.0.7 f936ddcb2ae3dbb66ee4926eb8b2ebbddc3facbe
 		fi
 	fi
 
