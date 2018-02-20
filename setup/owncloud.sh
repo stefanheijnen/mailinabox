@@ -269,6 +269,10 @@ InstallNextcloud() {
 		wget_verify https://github.com/nextcloud/nextant/releases/download/v${NEXTANT_VERSION}/nextant-${NEXTANT_VERSION}.tar.gz "${NEXTANT_HASH}" /tmp/nextant.tgz || exit 1
 		tar xf /tmp/nextant.tgz -C /usr/local/lib/owncloud/apps/
 		rm /tmp/nextant.tgz
+	elif systemctl list-unit-files | grep -q solr.service; then
+		# Stop & disable solr service so that our resources are more available
+		systemctl stop solr.service &>/dev/null
+		systemctl disable solr.service &>/dev/null
 	fi
 
 
