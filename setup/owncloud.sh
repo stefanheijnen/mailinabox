@@ -63,6 +63,10 @@ InstallSolr() {
 
 	local SOLR_PATH="/usr/local/lib/solr"
 	local SOLR_DATA="${STORAGE_ROOT}/solr/data"
+
+	# Before the solr installation begins, first kill running solr instance
+	ps faux | grep "solr\.home=${SOLR_PATH}" | awk '{print $2}' | xargs -I {} sh -c 'kill {} || kill -9 {}' &>/dev/null
+
 	wget_verify "${APACHE_FTP_MIRROR}/lucene/solr/${SOLR_VERSION}/solr-${SOLR_VERSION}.tgz" "${SOLR_HASH}" /tmp/solr.tgz
 
 	if test $? -ne 0; then
@@ -162,7 +166,7 @@ EOF
 	su solr -c "${SOLR_PATH}/bin/solr start"
 
 	echo "Creating index for nextant ..."
-	su solr -c "${SOLR_PATH}/bin/solr create -c nextant"
+	su solr -c "${SOLR_PATH}/bin/solr create -c nextant" || echo "nextant core is probably already created #TODO"
 
 	echo "Shutting down solr ..."
 	su solr -c "${SOLR_PATH}/bin/solr stop"
