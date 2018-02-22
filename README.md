@@ -44,11 +44,6 @@ setup/start.sh
 
 ## Toubleshooting
 
-In case of some trouble, please issue `setup/start.sh` command once again. If that doesn't help, please also try this command:
-```bash
-INSTALL_NEXTANT=no setup/start.sh
-```
-
-Otherwise, you are welcome to [file a new issue](https://github.com/jirislav/mailinabox/issues/new).
+In case of some trouble, please issue `setup/start.sh` command once again. If that doesn't help, you are welcome to [file a new issue](https://github.com/jirislav/mailinabox/issues/new).
 
 For further info, see [the original documentation for obtaining mail-in-a-box](https://mailinabox.email/guide.html).
