@@ -33,8 +33,8 @@ Quick Install
 
 ```bash
 # Clone this fork
-git clone https://github.com/jirislav/mailinabox.git
-cd mailinabox
+git clone https://github.com/jirislav/mailinabox.git $HOME/mailinabox
+cd $HOME/mailinabox
 
 git checkout v0.26c-ubuntu16
 
