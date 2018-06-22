@@ -44,4 +44,4 @@ setup/start.sh
 
 ## Toubleshooting
 
-In case of some trouble, please issue `setup/start.sh` command once again. If that doesn't help, you are welcome to [file a new issue](https://github.com/jirislav/mailinabox/issues/new).
+In case of some trouble, please issue `setup/start.sh` command once again. If that doesn't help, you are welcome to [file a new issue](https://github.com/stefanheijnen/mailinabox/issues/new).
