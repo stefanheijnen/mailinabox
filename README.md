@@ -33,7 +33,7 @@ Quick Install
 
 ```bash
 # Clone this fork
-git clone https://github.com/jirislav/mailinabox.git $HOME/mailinabox
+git clone https://github.com/stefanheijnen/mailinabox.git $HOME/mailinabox
 cd $HOME/mailinabox
 
 git checkout v0.27
