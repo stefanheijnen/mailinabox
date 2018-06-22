@@ -42,6 +42,22 @@ git checkout v0.27
 setup/start.sh
 ```
 
+## How to switch to this fork
+
+```bash
+sudo service mailinabox stop
+mv $HOME/mailinabox/ $HOME/mailinabox.old/
+
+# Clone this fork
+git clone https://github.com/stefanheijnen/mailinabox.git $HOME/mailinabox
+cd $HOME/mailinabox
+
+git checkout v0.27
+
+# Run installation
+setup/start.sh
+```
+
 ## Toubleshooting
 
 In case of some trouble, please issue `setup/start.sh` command once again. If that doesn't help, you are welcome to [file a new issue](https://github.com/stefanheijnen/mailinabox/issues/new).
