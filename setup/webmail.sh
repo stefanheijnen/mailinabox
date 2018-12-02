@@ -22,7 +22,7 @@ source /etc/mailinabox.conf # load global vars
 echo "Installing Roundcube (webmail)..."
 apt_install \
 	dbconfig-common \
-	php7.0-cli php7.0-sqlite php7.0-mcrypt php7.0-intl php7.0-json php7.0-common \
+	php7.0-cli php7.0-sqlite php7.0-mcrypt php7.0-intl php7.0-json php7.0-common php7.0-curl \
 	php7.0-gd php7.0-pspell tinymce libjs-jquery libjs-jquery-mousewheel libmagic1 php7.0-mbstring
 
 apt_get_quiet remove php-mail-mimedecode # no longer needed since Roundcube 1.1.3
@@ -35,8 +35,8 @@ apt-get purge -qq -y roundcube* #NODOC
 # Install Roundcube from source if it is not already present or if it is out of date.
 # Combine the Roundcube version number with the commit hash of plugins to track
 # whether we have the latest version of everything.
-VERSION=1.3.6
-HASH=ece5cfc9c7af0cbe90c0065ef33e85ed42991830
+VERSION=1.3.8
+HASH=90c7900ccf7b2f46fe49c650d5adb9b85ee9cc22
 PERSISTENT_LOGIN_VERSION=dc5ca3d3f4415cc41edb2fde533c8a8628a94c76
 HTML5_NOTIFIER_VERSION=4b370e3cd60dabd2f428a26f45b677ad1b7118d5
 CARDDAV_VERSION=2.0.4
@@ -157,6 +157,7 @@ cat > ${RCM_PLUGIN_DIR}/carddav/config.inc.php <<EOF;
 	 'preemptive_auth' => '1',
 	 'hide'        =>  false,
 );
+?>
 EOF
 
 # Create writable directories.

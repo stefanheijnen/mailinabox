@@ -8,7 +8,7 @@ For original sources, see [Mail-in-a-Box](https://github.com/mail-in-a-box/maili
 Why is this fork special?
 -------------------------
 
-Using this fork, one may easily install mail-in-a-box on **Ubuntu 16.04.03**!
+Using this fork, one may easily install mail-in-a-box on **Ubuntu 16.04.05**!
 
 Features
 --------
@@ -36,7 +36,7 @@ Quick Install
 git clone https://github.com/stefanheijnen/mailinabox.git $HOME/mailinabox
 cd $HOME/mailinabox
 
-git checkout v0.27
+git checkout v0.29
 
 # Run installation
 setup/start.sh
@@ -53,7 +53,7 @@ git clone https://github.com/stefanheijnen/mailinabox.git $HOME/mailinabox
 cd $HOME/mailinabox
 
 #note to self, don't forget tag!
-git checkout v0.27
+git checkout v0.29
 
 # Run installation
 setup/start.sh

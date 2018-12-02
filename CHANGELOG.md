@@ -1,11 +1,44 @@
 CHANGELOG
 =========
 
+In Development
+--------------
+ * Update to Roundcube 1.3.8.
+
+v0.29 (October 25, 2018)
+------------------------
+
+* Starting with v0.28, TLS certificate provisioning wouldn't work on new boxes until the mailinabox setup command was run a second time because of a problem with the non-interactive setup.
+* Update to Nextcloud 13.0.6.
+* Update to Roundcube 1.3.7.
+* Update to Z-Push 2.4.4.
+* Backup dates listed in the control panel now use an internationalized format.
+
+v0.28 (July 30, 2018)
+---------------------
+
+System:
+
+* We now use EFF's `certbot` to provision TLS certificates (from Let's Encrypt) instead of our home-grown ACME library.
+
+Contacts/Calendar:
+
+* Fix for Mac OS X autoconfig of the calendar.
+
+Setup:
+
+* Installing Z-Push broke because of what looks like a change or problem in their git server HTTPS certificate. That's fixed.
+
 v0.27 (June 14, 2018)
 ---------------------
 
+Mail:
+
 * A report of box activity, including sent/received mail totals and logins by user, is now emailed to the box's administrator user each week.
 * Update Roundcube to version 1.3.6 and Z-Push to version 2.3.9.
+
+Control Panel:
+
 * The undocumented feature for proxying web requests to another server now sets X-Forwarded-For.
 
 v0.26c (February 13, 2018)

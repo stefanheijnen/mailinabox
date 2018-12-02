@@ -19,9 +19,9 @@ Vagrant.configure("2") do |config|
   config.vm.network "private_network", ip: "192.168.50.4"
 
   config.vm.provision :shell, :inline => <<-SH
-	# Set environment variables so that the setup script does
-	# not ask any questions during provisioning. We'll let the
-	# machine figure out its own public IP.
+    # Set environment variables so that the setup script does
+    # not ask any questions during provisioning. We'll let the
+    # machine figure out its own public IP.
     export NONINTERACTIVE=1
     export PUBLIC_IP=auto
     export PUBLIC_IPV6=auto
