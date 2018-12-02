@@ -88,7 +88,9 @@ fi
 
 #miab ppa Xenial unsupported, disabling
 
+if [ -f /etc/apt/sources.list.d/mail-in-a-box-ubuntu-ppa-xenial.list ]; then
 hide_output rm /etc/apt/sources.list.d/mail-in-a-box-ubuntu-ppa-xenial.list*
+fi
 
 #hide_output add-apt-repository -y ppa:mail-in-a-box/ppa
 hide_output add-apt-repository -y ppa:certbot/certbot
