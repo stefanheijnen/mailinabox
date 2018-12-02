@@ -86,8 +86,16 @@ fi
 # text search plugin for (and by) dovecot, which is not available in
 # Ubuntu currently.
 
-hide_output add-apt-repository -y ppa:mail-in-a-box/ppa
+#miab ppa Xenial unsupported, disabling
+
+hide_output rm /etc/apt/sources.list.d/mail-in-a-box-ubuntu-ppa-xenial.list*
+
+#hide_output add-apt-repository -y ppa:mail-in-a-box/ppa
 hide_output add-apt-repository -y ppa:certbot/certbot
+
+#Workaround for ImportError: No module named 'acme.magic_typing'
+
+hide_output pip install --upgrade --force-reinstall acme
 
 # ### Update Packages
 

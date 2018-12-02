@@ -19,8 +19,8 @@ apt_install \
 apt-get purge -qq -y owncloud*
 
 apt_install php7.0 php7.0-fpm \
-	php7.0-cli php7.0-sqlite php7.0-gd php7.0-imap php7.0-curl php-pear php-apc curl \
-        php7.0-dev php7.0-gd memcached php-memcached php7.0-xml php7.0-mbstring php7.0-zip php7.0-apcu php7.0-json php7.0-intl
+	php7.0-cli php7.0-sqlite php7.0-gd php7.0-imap php7.0-curl php-pear php-apcu curl \
+        php7.0-dev php7.0-gd memcached php-memcached php7.0-xml php7.0-mbstring php7.0-zip php7.0-json php7.0-intl
 
 # Migrate <= v0.10 setups that stored the ownCloud config.php in /usr/local rather than
 # in STORAGE_ROOT. Move the file to STORAGE_ROOT.
@@ -582,7 +582,9 @@ hide_output sudo -u www-data php /usr/local/lib/owncloud/console.php app:disable
 hide_output sudo -u www-data php /usr/local/lib/owncloud/console.php app:enable user_external
 hide_output sudo -u www-data php /usr/local/lib/owncloud/console.php app:enable contacts
 hide_output sudo -u www-data php /usr/local/lib/owncloud/console.php app:enable calendar
-hide_output sudo -u www-data php /usr/local/lib/owncloud/console.php app:enable spreed
+
+#Not working. I don't use it, so disabled.
+#hide_output sudo -u www-data php /usr/local/lib/owncloud/console.php app:enable spreed
 
 # Don't do anything if not installing nextant
 if test ${INSTALL_NEXTANT} = "yes"; then
