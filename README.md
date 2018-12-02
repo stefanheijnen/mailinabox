@@ -53,7 +53,7 @@ git clone https://github.com/stefanheijnen/mailinabox.git $HOME/mailinabox
 cd $HOME/mailinabox
 
 #note to self, don't forget tag!
-git checkout v0.29
+git checkout v0.29a
 
 # Run installation
 setup/start.sh
